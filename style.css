@@ -1,13 +1,34 @@
 body {
-	font-family: Arial, sans-serif;
+	font-family: 'Roboto', sans-serif;
 	margin: 20px;
-	background: #f9f9f9;
+	background: #f0f0f0;
 	color: #333;
-	transition: background 0.3s, color 0.3s;
+	transition: background 0.5s ease-in-out; /* Smoother transition for body */
+	line-height: 1.6;
+}
+
+h1 {
+	font-family: 'Merriweather', serif;
+	text-align: center;
+	font-weight: bold;
+	margin-bottom: 20px;
+	color: #333; /* Black color for light theme */
+}
+body.dark h1 {
+	color: #fff; /* White color for dark theme */
+}
+
+textarea {
+	font-family: 'Roboto', monospace; /* Monospace font for textarea */
+	border: 1px solid #ccc;
+	border-radius: 8px; /* Rounded corners for textarea */
+	padding: 10px; /* Padding inside textarea */
+	box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1); /* More pronounced inner shadow */
 }
 body.dark {
 	background: #222;
 	color: #ddd;
+	transition: background 0.5s ease-in-out; /* Smoother transition for dark mode */
 }
 h1 {
 	text-align: center;
@@ -24,18 +45,22 @@ textarea {
 	background: #fff;
 	color: #333;
 }
-body.dark textarea {
-	background: #333;
+body.dark textarea,
+body.dark #preview {
+	border-color: #555;
+	background-color: #333;
 	color: #ddd;
-	border: 1px solid #555;
+	font-family: 'Times New Roman', Times, serif;
 }
 #preview {
 	margin-top: 20px;
-	padding: 10px;
-	border: 1px solid #ccc;
+	padding: 20px; /* More padding for preview */
+	border: 1px solid #ddd; /* Lighter border for preview */
 	background: #fff;
-	border-radius: 4px;
+	border-radius: 8px; /* Rounded corners for preview */
 	min-height: 100px;
+	font-family: 'Times New Roman', Times, serif; /* Set font for preview */
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for preview */
 }
 body.dark #preview {
 	background: #333;
@@ -43,27 +68,65 @@ body.dark #preview {
 }
 button {
 	margin-top: 10px;
-	padding: 10px 15px;
-	font-size: 14px;
+	padding: 12px 20px; /* Increased padding */
+	font-size: 16px; /* Increased font size */
 	border: none;
-	border-radius: 4px;
+	border-radius: 8px; /* More rounded corners */
 	background: #007bff;
 	color: #fff;
 	cursor: pointer;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+	transition: background-color 0.3s ease; /* Smooth background transition */
 }
 button:hover {
 	background: #0056b3;
+}
+button:active {
+	background: #004289; /* Even darker shade for active state */
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); /* Slightly adjusted shadow when active */
 }
 #themeToggle {
 	position: fixed;
 	top: 20px;
 	right: 20px;
+	padding: 10px 15px;
+	font-size: 14px;
+	border: none;
+	border-radius: 8px;
+	background: #6c757d; /* Grey background for toggle */
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	transition: background-color 0.3s ease;
+}
+#themeToggle:hover {
+	background: #5a6268; /* Darker grey on hover */
+}
+#themeToggle:active {
+	background: #4e555b; /* Even darker grey on active */
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 #historyControls {
-	margin-top: 10px;
+	margin-top: 20px; /* More margin above history controls */
+	text-align: center; /* Center align history buttons */
 }
 #historyControls button {
-	margin-right: 5px;
+	margin: 0 5px; /* Spacing between history buttons */
+	padding: 8px 12px; /* Slightly smaller padding for history buttons */
+	font-size: 14px; /* Slightly smaller font size for history buttons */
+	background: #eee; /* Lighter background for history buttons */
+	color: #555; /* Darker text color for history buttons */
+	border-radius: 6px; /* Slightly less rounded corners for history buttons */
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Smaller shadow for history buttons */
+	transition: background-color 0.3s ease, color 0.3s ease;
+}
+#historyControls button:hover {
+	background: #ddd; /* Slightly darker background on hover for history buttons */
+	color: #333; /* Darker text on hover for history buttons */
+}
+#historyControls button:active {
+	background: #ccc; /* Even darker background on active for history buttons */
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15); /* Even smaller shadow when active for history buttons */
 }
 /* Кнопка, которая появляется при выделении текста в preview */
 #contextAction {
