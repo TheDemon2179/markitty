@@ -1,0 +1,80 @@
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+	background: #f9f9f9;
+	color: #333;
+	transition: background 0.3s, color 0.3s;
+}
+body.dark {
+	background: #222;
+	color: #ddd;
+}
+h1 {
+	text-align: center;
+}
+textarea {
+	width: 100%;
+	height: 200px;
+	padding: 10px;
+	font-size: 14px;
+	box-sizing: border-box;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	resize: vertical;
+	background: #fff;
+	color: #333;
+}
+body.dark textarea {
+	background: #333;
+	color: #ddd;
+	border: 1px solid #555;
+}
+#preview {
+	margin-top: 20px;
+	padding: 10px;
+	border: 1px solid #ccc;
+	background: #fff;
+	border-radius: 4px;
+	min-height: 100px;
+}
+body.dark #preview {
+	background: #333;
+	border: 1px solid #555;
+}
+button {
+	margin-top: 10px;
+	padding: 10px 15px;
+	font-size: 14px;
+	border: none;
+	border-radius: 4px;
+	background: #007bff;
+	color: #fff;
+	cursor: pointer;
+}
+button:hover {
+	background: #0056b3;
+}
+#themeToggle {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+}
+#historyControls {
+	margin-top: 10px;
+}
+#historyControls button {
+	margin-right: 5px;
+}
+/* Кнопка, которая появляется при выделении текста в preview */
+#contextAction {
+	position: absolute;
+	display: none;
+	padding: 5px 10px;
+	font-size: 12px;
+	background: #28a745;
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	z-index: 1000;
+}

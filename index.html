@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Markitty</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<button id="themeToggle">Темная тема</button>
+		<h1>Markitty</h1>
+		<textarea
+			id="markdownInput"
+			placeholder="Введите Markdown здесь..."
+		></textarea>
+		<br />
+		<button id="renderBtn">Отобразить Markdown</button>
+		<div id="historyControls">
+			<button id="prevHistory">&larr; Назад</button>
+			<button id="nextHistory">Вперёд &rarr;</button>
+		</div>
+		<div id="preview"></div>
+		<button id="copyBtn">Скопировать для Word</button>
+
+		<!-- Плавающая кнопка для действий по выделенному тексту -->
+		<button id="contextAction">Удалить строки с этим текстом</button>
+
+		<!-- Подключаем библиотеку Marked.js (используйте нужную ссылку, например, с cdnjs) -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+		<script src="script.js"></script>
+	</body>
+</html>
