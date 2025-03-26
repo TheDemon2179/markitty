@@ -7,11 +7,23 @@ const prevHistoryBtn = document.getElementById('prevHistory')
 const nextHistoryBtn = document.getElementById('nextHistory')
 const contextAction = document.getElementById('contextAction')
 
+const processDashListCheckbox = document.getElementById('processDashList')
+const processNumListCheckbox = document.getElementById('processNumList')
+const useSemicolonsCheckbox = document.getElementById('useSemicolons')
+const listEndingSelect = document.getElementById('listEndingPunctuation')
+const processCodeStyleCheckbox = document.getElementById('processCodeStyle')
+
 // Ключи для localStorage
 const THEME_KEY = 'darkTheme'
 const TEXT_KEY = 'markdownText'
 const HISTORY_KEY = 'markdownHistory'
 const HISTORY_INDEX_KEY = 'historyIndex'
+
+const PROCESS_DASH_LIST_KEY = 'processDashList'
+const PROCESS_NUM_LIST_KEY = 'processNumList'
+const USE_SEMICOLONS_KEY = 'useSemicolons'
+const LIST_ENDING_KEY = 'listEnding'
+const PROCESS_CODE_STYLE_KEY = 'processCodeStyle'
 
 // Загружаем тему из localStorage
 function loadTheme() {
@@ -29,8 +41,8 @@ loadTheme()
 themeToggle.addEventListener('click', () => {
 	document.body.classList.toggle('dark')
 	const isDark = document.body.classList.contains('dark')
-	localStorage.setItem(THEME_KEY, isDark)
 	themeToggle.textContent = isDark ? 'Светлая тема' : 'Темная тема'
+	saveSettings() // Сохраняем все настройки
 })
 
 // Загружаем сохранённый текст из localStorage
@@ -44,21 +56,94 @@ loadSavedText()
 
 // Сохранение текста в localStorage при изменениях
 markdownInput.addEventListener('input', () => {
+	// Не сохраняем сразу все настройки при каждом вводе, только текст
 	localStorage.setItem(TEXT_KEY, markdownInput.value)
+	// Можно добавить debounce, если сохранение будет тормозить
 })
+
+// --- Загрузка и применение сохраненных настроек ---
+function loadSettings() {
+	// Тема
+	const darkTheme = localStorage.getItem(THEME_KEY) === 'true'
+	document.body.classList.toggle('dark', darkTheme)
+	themeToggle.textContent = darkTheme ? 'Светлая тема' : 'Темная тема'
+
+	// Текст
+	const savedText = localStorage.getItem(TEXT_KEY)
+	if (savedText) {
+		markdownInput.value = savedText
+	}
+
+	// Настройки форматирования
+	processDashListCheckbox.checked =
+		localStorage.getItem(PROCESS_DASH_LIST_KEY) !== 'false' // По умолчанию true
+	processNumListCheckbox.checked =
+		localStorage.getItem(PROCESS_NUM_LIST_KEY) !== 'false' // По умолчанию true
+	useSemicolonsCheckbox.checked =
+		localStorage.getItem(USE_SEMICOLONS_KEY) === 'true' // По умолчанию false
+	listEndingSelect.value = localStorage.getItem(LIST_ENDING_KEY) || 'none' // По умолчанию 'none'
+	processCodeStyleCheckbox.checked =
+		localStorage.getItem(PROCESS_CODE_STYLE_KEY) !== 'false' // По умолчанию true
+
+	// Применяем стиль кода сразу
+	applyCodeStyleSetting()
+}
+
+// --- Сохранение настроек ---
+function saveSettings() {
+	localStorage.setItem(THEME_KEY, document.body.classList.contains('dark'))
+	localStorage.setItem(TEXT_KEY, markdownInput.value)
+	localStorage.setItem(PROCESS_DASH_LIST_KEY, processDashListCheckbox.checked)
+	localStorage.setItem(PROCESS_NUM_LIST_KEY, processNumListCheckbox.checked)
+	localStorage.setItem(USE_SEMICOLONS_KEY, useSemicolonsCheckbox.checked)
+	localStorage.setItem(LIST_ENDING_KEY, listEndingSelect.value)
+	localStorage.setItem(PROCESS_CODE_STYLE_KEY, processCodeStyleCheckbox.checked)
+}
 
 // Функция для рендеринга Markdown в HTML
 function renderMarkdown() {
-	const markdownText = markdownInput.value
+	let markdownText = markdownInput.value
+
+	// Получаем текущие настройки
+	const addEnding = listEndingSelect.value
+	const useSemicolons = useSemicolonsCheckbox.checked
+	const processDash = processDashListCheckbox.checked
+	const processNum = processNumListCheckbox.checked
+
+	// 1. Добавляем пунктуацию в конце строк списка (если выбрано)
+	markdownText = addListEndingPunctuation(markdownText, addEnding)
+
+	// 2. Обрабатываем точки с запятыми (если включено)
+	markdownText = processSemicolonsInLists(markdownText, useSemicolons)
+
+	// 3. Экранируем маркеры списка (если преобразование ОТКЛЮЧЕНО)
+	// Обратите внимание: мы экранируем, если чекбокс НЕ отмечен
+	markdownText = escapeListMarkers(markdownText, !processDash, !processNum)
+
+	// 4. Рендерим с помощью Marked.js
 	const html = marked.parse(markdownText)
 	preview.innerHTML = html
+
+	// 5. Применяем настройку стиля кода (через CSS)
+	applyCodeStyleSetting()
+
+	// Сохраняем все настройки после рендеринга (по кнопке или изменению настроек)
+	// saveSettings(); // Перемещено в обработчики событий
 }
 
 // Обновление истории (сохраняем не более 5 версий)
 function updateHistory(newText) {
 	let history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []
+	let currentIndex = parseInt(localStorage.getItem(HISTORY_INDEX_KEY)) || -1 // Используем -1 для пустого
+
+	// Если мы не в конце истории (т.е. были "назад"), обрезаем историю
+	if (currentIndex < history.length - 1) {
+		history = history.slice(0, currentIndex + 1)
+	}
+
 	// Если последний элемент совпадает с новым, не добавляем
 	if (history.length && history[history.length - 1] === newText) return
+
 	history.push(newText)
 	if (history.length > 5) {
 		history.shift()
@@ -71,6 +156,7 @@ function updateHistory(newText) {
 renderBtn.addEventListener('click', () => {
 	renderMarkdown()
 	updateHistory(markdownInput.value)
+	saveSettings() // Сохраняем настройки при ручном рендере
 })
 
 // Копирование HTML в буфер обмена
@@ -86,11 +172,36 @@ copyBtn.addEventListener('click', async function () {
 	}
 })
 
+processDashListCheckbox.addEventListener('change', () => {
+	renderMarkdown()
+	saveSettings()
+})
+processNumListCheckbox.addEventListener('change', () => {
+	renderMarkdown()
+	saveSettings()
+})
+useSemicolonsCheckbox.addEventListener('change', () => {
+	renderMarkdown()
+	saveSettings()
+})
+listEndingSelect.addEventListener('change', () => {
+	renderMarkdown()
+	saveSettings()
+})
+processCodeStyleCheckbox.addEventListener('change', () => {
+	// Просто применяем стиль, не нужно перерендеривать Markdown
+	applyCodeStyleSetting()
+	saveSettings()
+})
+
 // История: навигация "назад" и "вперёд"
 function loadHistoryIndex() {
 	const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []
-	const index =
-		parseInt(localStorage.getItem(HISTORY_INDEX_KEY)) || history.length - 1
+	// Загружаем индекс, убеждаемся, что он в допустимых границах
+	let index = parseInt(localStorage.getItem(HISTORY_INDEX_KEY))
+	if (isNaN(index) || index < 0 || index >= history.length) {
+		index = history.length - 1 // По умолчанию последний элемент
+	}
 	return { history, index }
 }
 prevHistoryBtn.addEventListener('click', () => {
@@ -99,8 +210,9 @@ prevHistoryBtn.addEventListener('click', () => {
 		index--
 		localStorage.setItem(HISTORY_INDEX_KEY, index)
 		markdownInput.value = history[index]
-		renderMarkdown()
-		localStorage.setItem(TEXT_KEY, history[index])
+		renderMarkdown() // Перерендериваем с текущими настройками
+		localStorage.setItem(TEXT_KEY, history[index]) // Сохраняем текст
+		// Не сохраняем настройки здесь, чтобы история не меняла настройки
 	}
 })
 nextHistoryBtn.addEventListener('click', () => {
@@ -109,8 +221,9 @@ nextHistoryBtn.addEventListener('click', () => {
 		index++
 		localStorage.setItem(HISTORY_INDEX_KEY, index)
 		markdownInput.value = history[index]
-		renderMarkdown()
-		localStorage.setItem(TEXT_KEY, history[index])
+		renderMarkdown() // Перерендериваем с текущими настройками
+		localStorage.setItem(TEXT_KEY, history[index]) // Сохраняем текст
+		// Не сохраняем настройки здесь
 	}
 })
 
@@ -128,9 +241,10 @@ function removeDuplicateLines(selectedText) {
 		)
 	) {
 		markdownInput.value = filtered.join('\n')
-		localStorage.setItem(TEXT_KEY, markdownInput.value)
-		renderMarkdown()
-		updateHistory(markdownInput.value)
+		localStorage.setItem(TEXT_KEY, markdownInput.value) // Сохраняем текст
+		renderMarkdown() // Перерендериваем
+		updateHistory(markdownInput.value) // Обновляем историю
+		saveSettings() // Сохраняем все настройки
 	}
 }
 
@@ -138,13 +252,11 @@ function removeDuplicateLines(selectedText) {
 preview.addEventListener('mouseup', e => {
 	const selection = window.getSelection().toString()
 	if (selection.trim().length > 0) {
-		// Позиционируем кнопку рядом с выделением
 		const range = window.getSelection().getRangeAt(0)
 		const rect = range.getBoundingClientRect()
 		contextAction.style.top = rect.bottom + window.scrollY + 5 + 'px'
 		contextAction.style.left = rect.left + window.scrollX + 'px'
 		contextAction.style.display = 'block'
-		// Привязываем действие к кнопке
 		contextAction.onclick = () => {
 			removeDuplicateLines(selection)
 			contextAction.style.display = 'none'
@@ -154,6 +266,7 @@ preview.addEventListener('mouseup', e => {
 		contextAction.style.display = 'none'
 	}
 })
+
 // Скрывать кнопку при клике вне выделения
 document.addEventListener('click', e => {
 	if (!preview.contains(e.target) && e.target !== contextAction) {
@@ -161,5 +274,164 @@ document.addEventListener('click', e => {
 	}
 })
 
-// При загрузке страницы рендерим сохранённый текст
-renderMarkdown()
+function addListEndingPunctuation(text, punctuation) {
+	if (punctuation === 'none') return text
+
+	const lines = text.split('\n')
+	const endingPunctuationRegex = /[.,;:!?]$/ // Регулярка для проверки наличия пунктуации в конце
+	const listMarkerRegex = /^(\s*)(-|\*|\+|\d+\.)\s+/ // Регулярка для определения строки списка
+
+	return lines
+		.map(line => {
+			const trimmedLine = line.trimEnd() // Убираем пробелы в конце
+			if (
+				listMarkerRegex.test(trimmedLine) &&
+				trimmedLine.length > 0 &&
+				!endingPunctuationRegex.test(trimmedLine)
+			) {
+				// Добавляем пунктуацию, если это строка списка, она не пустая и не заканчивается пунктуацией
+				return trimmedLine + punctuation
+			}
+			return line // Возвращаем строку без изменений
+		})
+		.join('\n')
+}
+
+function processSemicolonsInLists(text, useSemicolons) {
+	// Убрали проверку if (!useSemicolons) return text;
+	// Функция теперь вызывается всегда, но логика замены точки на ; и ; на .
+	// зависит от флага useSemicolons.
+
+	const lines = text.split('\n')
+	const listMarkerRegex = /^(\s*)(-|\*|\+|\d+\.)\s+/
+	let processedLines = []
+	let currentListBlock = [] // Хранит строки текущего блока списка
+
+	function processBlock() {
+		if (currentListBlock.length > 0) {
+			// Основная логика: Замена '.' на ';' для НЕ-последних элементов
+			if (useSemicolons) {
+				for (let i = 0; i < currentListBlock.length - 1; i++) {
+					let line = currentListBlock[i]
+					let trimmedLine = line.trimEnd()
+					if (trimmedLine.endsWith('.')) {
+						// Заменяем последнюю точку на точку с запятой
+						currentListBlock[i] = trimmedLine.slice(0, -1) + ';'
+					}
+					// Добавим случай: если не-последний элемент заканчивается на ';', оставляем ';'
+					// Это нужно, если пользователь ВЫБРАЛ добавление ';' и ОТКЛЮЧИЛ замену '.' на ';'
+					// В этом случае мы не должны менять ';' на '.' для не-последних элементов.
+					// Ничего делать не надо, `;` остается.
+				}
+			}
+
+			// --- НОВОЕ: Обработка ПОСЛЕДНЕГО элемента ---
+			if (currentListBlock.length > 0) {
+				const lastIndex = currentListBlock.length - 1
+				let lastLine = currentListBlock[lastIndex]
+				let trimmedLastLine = lastLine.trimEnd()
+
+				// Если включена опция "Заменять '.' на ';'" И последний элемент заканчивается на ';'
+				if (useSemicolons && trimmedLastLine.endsWith(';')) {
+					// Заменяем ';' на '.' в последнем элементе
+					currentListBlock[lastIndex] = trimmedLastLine.slice(0, -1) + '.'
+				}
+				// Если опция "Заменять '.' на ';'" ВЫКЛЮЧЕНА, то мы НЕ должны менять
+				// точку с запятой на точку в последнем элементе, даже если она там есть
+				// (например, была добавлена опцией "Добавить в конце строк списка").
+				// Поэтому дополнительной логики не нужно.
+			}
+			// --- КОНЕЦ НОВОГО ---
+
+			processedLines.push(...currentListBlock) // Добавляем обработанный блок
+			currentListBlock = [] // Очищаем для следующего блока
+		}
+	}
+
+	// Проход по строкам для разделения на блоки
+	for (const line of lines) {
+		// Проверяем, начинается ли строка как элемент списка И не является ли пустой после маркера
+		if (
+			listMarkerRegex.test(line) &&
+			line.match(listMarkerRegex)[0].length < line.trim().length
+		) {
+			currentListBlock.push(line)
+		} else {
+			processBlock() // Обрабатываем предыдущий блок списка
+			processedLines.push(line) // Добавляем не-списочную строку
+		}
+	}
+	processBlock() // Обрабатываем последний блок списка, если он остался
+
+	return processedLines.join('\n')
+}
+
+function escapeListMarkers(text, escapeDash, escapeNum) {
+	if (!escapeDash && !escapeNum) return text
+
+	const lines = text.split('\n')
+	const dashListRegex = /^(\s*)(-|\*|\+)(\s+)/
+	const numListRegex = /^(\s*)(\d+)\.(\s+)/
+	let isFirstItemInBlock = true // Флаг для первого элемента в блоке
+
+	return lines
+		.map(line => {
+			let modifiedLine = line
+			let escaped = false
+
+			if (escapeDash) {
+				const dashMatch = line.match(dashListRegex)
+				if (dashMatch) {
+					// Экранируем маркер
+					modifiedLine = `${dashMatch[1]}\\${dashMatch[2]}${
+						dashMatch[3]
+					}${line.slice(dashMatch[0].length)}`
+					escaped = true
+				}
+			}
+			if (escapeNum) {
+				const numMatch = modifiedLine.match(numListRegex)
+				if (numMatch) {
+					// Экранируем маркер
+					modifiedLine = `${numMatch[1]}${numMatch[2]}\\.${
+						numMatch[3]
+					}${modifiedLine.slice(numMatch[0].length)}`
+					escaped = true
+				}
+			}
+
+			if (escaped) {
+				if (isFirstItemInBlock) {
+					// Добавляем <br> ПЕРЕД первым элементом
+					modifiedLine = '<br>' + modifiedLine
+					isFirstItemInBlock = false // Сбрасываем флаг для остальных элементов блока
+				}
+				// Добавляем <br> ПОСЛЕ каждого элемента, если строка не пустая и не заканчивается <br>
+				if (
+					modifiedLine.trim().length > 0 &&
+					!modifiedLine.trimEnd().endsWith('<br>') &&
+					!modifiedLine.trimEnd().endsWith('<br/>')
+				) {
+					modifiedLine = modifiedLine + '<br>'
+				}
+			} else {
+				// Если строка не была экранирована (не маркер списка),
+				// значит, это может быть разделитель между блоками списков.
+				isFirstItemInBlock = true // Начинаем новый блок при следующей экранированной строке
+			}
+
+			return modifiedLine
+		})
+		.join('\n')
+}
+
+function applyCodeStyleSetting() {
+	if (processCodeStyleCheckbox.checked) {
+		preview.classList.remove('no-code-style')
+	} else {
+		preview.classList.add('no-code-style')
+	}
+}
+
+loadSettings() // Загружаем все настройки и текст
+renderMarkdown() // Рендерим с загруженными настройками

@@ -12,11 +12,52 @@
 			id="markdownInput"
 			placeholder="Введите Markdown здесь..."
 		></textarea>
+
+		<!-- Настройки форматирования -->
+		<fieldset id="formattingOptions">
+			<legend>Настройки форматирования</legend>
+
+			<div>
+				<input type="checkbox" id="processDashList" checked />
+				<label for="processDashList">Преобразовывать '-' в список</label>
+			</div>
+
+			<div>
+				<input type="checkbox" id="processNumList" checked />
+				<label for="processNumList">Преобразовывать '1.' в список</label>
+			</div>
+
+			<div>
+				<input type="checkbox" id="useSemicolons" />
+				<label for="useSemicolons"
+					>Заменять '.' на ';' в списках (кроме последнего)</label
+				>
+			</div>
+
+			<div>
+				<label for="listEndingPunctuation"
+					>Добавить в конце строк списка:</label
+				>
+				<select id="listEndingPunctuation">
+					<option value="none">Нет</option>
+					<option value=".">Точка (.)</option>
+					<option value=",">Запятая (,)</option>
+					<option value=";">Точка с запятой (;)</option>
+				</select>
+			</div>
+
+			<div>
+				<input type="checkbox" id="processCodeStyle" checked />
+				<label for="processCodeStyle">Применять стиль к `коду`</label>
+			</div>
+		</fieldset>
+		<!-- Конец Настроек форматирования -->
+
 		<br />
 		<button id="renderBtn">Отобразить Markdown</button>
 		<div id="historyControls">
-			<button id="prevHistory">&larr; Назад</button>
-			<button id="nextHistory">Вперёд &rarr;</button>
+			<button id="prevHistory">← Назад</button>
+			<button id="nextHistory">Вперёд →</button>
 		</div>
 		<div id="preview"></div>
 		<button id="copyBtn">Скопировать для Word</button>
@@ -24,7 +65,7 @@
 		<!-- Плавающая кнопка для действий по выделенному тексту -->
 		<button id="contextAction">Удалить строки с этим текстом</button>
 
-		<!-- Подключаем библиотеку Marked.js (используйте нужную ссылку, например, с cdnjs) -->
+		<!-- Подключаем библиотеку Marked.js -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
 		<script src="script.js"></script>
 	</body>

@@ -141,3 +141,77 @@ button:active {
 	cursor: pointer;
 	z-index: 1000;
 }
+
+/* Стили для блока настроек */
+#formattingOptions {
+	margin-top: 15px;
+	padding: 15px;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	background-color: #f9f9f9; /* Чуть светлее фона */
+}
+
+body.dark #formattingOptions {
+	border-color: #555;
+	background-color: #3a3a3a; /* Чуть светлее темного фона */
+}
+
+#formattingOptions legend {
+	font-weight: bold;
+	padding: 0 10px;
+	color: #333; /* Цвет заголовка в светлой теме */
+}
+
+body.dark #formattingOptions legend {
+	color: #ddd; /* Цвет заголовка в темной теме */
+}
+
+#formattingOptions div {
+	margin-bottom: 10px; /* Отступ между строками настроек */
+	display: flex; /* Выравнивание label и input/select */
+	align-items: center; /* Вертикальное выравнивание по центру */
+}
+
+#formattingOptions label {
+	margin-left: 8px; /* Отступ между чекбоксом/селектом и текстом */
+	flex-grow: 1; /* Занимает оставшееся место */
+	color: #333; /* Цвет текста в светлой теме */
+}
+
+body.dark #formattingOptions label {
+	color: #ddd; /* Цвет текста в темной теме */
+}
+
+#formattingOptions input[type='checkbox'] {
+	margin: 0; /* Убираем лишние отступы у чекбоксов */
+	width: 16px; /* Фиксированная ширина чекбокса */
+	height: 16px; /* Фиксированная высота чекбокса */
+	cursor: pointer;
+}
+
+#formattingOptions select {
+	padding: 5px 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+	color: #333;
+	margin-left: 5px; /* Небольшой отступ слева */
+	cursor: pointer;
+}
+
+body.dark #formattingOptions select {
+	border-color: #555;
+	background-color: #333;
+	color: #ddd;
+}
+
+/* Класс для отключения стиля кода */
+#preview.no-code-style code {
+	font-family: inherit !important; /* Наследовать шрифт от родителя */
+	font-size: inherit !important; /* Наследовать размер шрифта */
+	background-color: transparent !important; /* Убрать фон */
+	border: none !important; /* Убрать рамку (если есть) */
+	padding: 0 !important; /* Убрать отступы */
+	color: inherit !important; /* Наследовать цвет текста */
+	/* Добавьте !important, если стили marked.js или браузера перебивают */
+}
