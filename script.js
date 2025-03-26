@@ -13,6 +13,11 @@ const useSemicolonsCheckbox = document.getElementById('useSemicolons')
 const listEndingSelect = document.getElementById('listEndingPunctuation')
 const processCodeStyleCheckbox = document.getElementById('processCodeStyle')
 
+const lowercaseAfterColonCheckbox = document.getElementById(
+	'lowercaseAfterColon'
+)
+const removeIndentationCheckbox = document.getElementById('removeIndentation')
+
 // Ключи для localStorage
 const THEME_KEY = 'darkTheme'
 const TEXT_KEY = 'markdownText'
@@ -24,6 +29,9 @@ const PROCESS_NUM_LIST_KEY = 'processNumList'
 const USE_SEMICOLONS_KEY = 'useSemicolons'
 const LIST_ENDING_KEY = 'listEnding'
 const PROCESS_CODE_STYLE_KEY = 'processCodeStyle'
+
+const LOWERCASE_COLON_KEY = 'lowercaseAfterColon'
+const REMOVE_INDENT_KEY = 'removeIndentation'
 
 // Загружаем тему из localStorage
 function loadTheme() {
@@ -84,9 +92,14 @@ function loadSettings() {
 	listEndingSelect.value = localStorage.getItem(LIST_ENDING_KEY) || 'none' // По умолчанию 'none'
 	processCodeStyleCheckbox.checked =
 		localStorage.getItem(PROCESS_CODE_STYLE_KEY) !== 'false' // По умолчанию true
+	lowercaseAfterColonCheckbox.checked =
+		localStorage.getItem(LOWERCASE_COLON_KEY) === 'true' // По умолчанию false
+	removeIndentationCheckbox.checked =
+		localStorage.getItem(REMOVE_INDENT_KEY) === 'true' // По умолчанию false
 
 	// Применяем стиль кода сразу
 	applyCodeStyleSetting()
+	applyTabulationSetting() // Применяем настройку отступов
 }
 
 // --- Сохранение настроек ---
@@ -98,6 +111,8 @@ function saveSettings() {
 	localStorage.setItem(USE_SEMICOLONS_KEY, useSemicolonsCheckbox.checked)
 	localStorage.setItem(LIST_ENDING_KEY, listEndingSelect.value)
 	localStorage.setItem(PROCESS_CODE_STYLE_KEY, processCodeStyleCheckbox.checked)
+	localStorage.setItem(LOWERCASE_COLON_KEY, lowercaseAfterColonCheckbox.checked)
+	localStorage.setItem(REMOVE_INDENT_KEY, removeIndentationCheckbox.checked)
 }
 
 // Функция для рендеринга Markdown в HTML
@@ -109,15 +124,19 @@ function renderMarkdown() {
 	const useSemicolons = useSemicolonsCheckbox.checked
 	const processDash = processDashListCheckbox.checked
 	const processNum = processNumListCheckbox.checked
+	const makeLowercase = lowercaseAfterColonCheckbox.checked // Новая настройка
+
+	// ПОРЯДОК ВАЖЕН!
+	// 0. Преобразуем в нижний регистр после двоеточия (если включено)
+	markdownText = lowercaseAfterColonInLists(markdownText, makeLowercase)
 
 	// 1. Добавляем пунктуацию в конце строк списка (если выбрано)
 	markdownText = addListEndingPunctuation(markdownText, addEnding)
 
-	// 2. Обрабатываем точки с запятыми (если включено)
+	// 2. Обрабатываем точки с запятыми (если включено ИЛИ для исправления последнего элемента)
 	markdownText = processSemicolonsInLists(markdownText, useSemicolons)
 
 	// 3. Экранируем маркеры списка (если преобразование ОТКЛЮЧЕНО)
-	// Обратите внимание: мы экранируем, если чекбокс НЕ отмечен
 	markdownText = escapeListMarkers(markdownText, !processDash, !processNum)
 
 	// 4. Рендерим с помощью Marked.js
@@ -127,8 +146,10 @@ function renderMarkdown() {
 	// 5. Применяем настройку стиля кода (через CSS)
 	applyCodeStyleSetting()
 
-	// Сохраняем все настройки после рендеринга (по кнопке или изменению настроек)
-	// saveSettings(); // Перемещено в обработчики событий
+	// 6. Применяем настройку отступов (через CSS)
+	applyTabulationSetting()
+
+	// Сохранение настроек происходит в обработчиках событий
 }
 
 // Обновление истории (сохраняем не более 5 версий)
@@ -191,6 +212,15 @@ listEndingSelect.addEventListener('change', () => {
 processCodeStyleCheckbox.addEventListener('change', () => {
 	// Просто применяем стиль, не нужно перерендеривать Markdown
 	applyCodeStyleSetting()
+	saveSettings()
+})
+lowercaseAfterColonCheckbox.addEventListener('change', () => {
+	renderMarkdown() // Перерендерить с новой обработкой
+	saveSettings()
+})
+removeIndentationCheckbox.addEventListener('change', () => {
+	// Не нужно перерендеривать Markdown, только применить/убрать CSS класс
+	applyTabulationSetting()
 	saveSettings()
 })
 
@@ -273,6 +303,67 @@ document.addEventListener('click', e => {
 		contextAction.style.display = 'none'
 	}
 })
+
+function lowercaseAfterColonInLists(text, enabled) {
+	if (!enabled) return text
+
+	const lines = text.split('\n')
+	const listMarkerRegex = /^(\s*)(?:-|\*|\+|\d+\.)(\s+)/
+	// Символы Markdown, которые могут стоять между ':' и первой буквой, и которые нужно игнорировать
+	const markdownCharsToIgnore = ['*', '_', '`', '~', '[', '<'] // Добавьте другие, если нужно
+
+	return lines
+		.map(line => {
+			const match = line.match(listMarkerRegex)
+
+			if (match) {
+				const colonIndex = line.indexOf(':')
+
+				if (colonIndex !== -1 && colonIndex < line.length - 1) {
+					let firstLetterIndex = -1 // Индекс первой БУКВЫ
+					let firstLetter = '' // Сама первая БУКВА
+
+					// Ищем индекс первой БУКВЫ после двоеточия, пропуская пробелы и символы разметки
+					for (let i = colonIndex + 1; i < line.length; i++) {
+						const char = line[i]
+
+						if (/\s/.test(char)) {
+							// Пропускаем пробельные символы
+							continue
+						}
+						if (markdownCharsToIgnore.includes(char)) {
+							// Пропускаем символы разметки
+							continue
+						}
+
+						// Если символ не пробел и не символ разметки - считаем его первой буквой
+						firstLetterIndex = i
+						firstLetter = char
+						break // Нашли первую букву, выходим
+					}
+
+					// Условие: Первая буква найдена
+					if (firstLetterIndex !== -1) {
+						// Условие: Найденная буква является заглавной
+						if (
+							firstLetter !== firstLetter.toLowerCase() &&
+							firstLetter === firstLetter.toUpperCase()
+						) {
+							const lowerChar = firstLetter.toLowerCase() // Преобразуем в строчную
+							// Пересобираем строку, заменяя символ по найденному индексу ПЕРВОЙ БУКВЫ
+							return (
+								line.substring(0, firstLetterIndex) +
+								lowerChar +
+								line.substring(firstLetterIndex + 1)
+							)
+						}
+					}
+				}
+			}
+			return line // Возвращаем строку без изменений, если условия не выполнены
+		})
+		.join('\n')
+}
 
 function addListEndingPunctuation(text, punctuation) {
 	if (punctuation === 'none') return text
@@ -425,11 +516,21 @@ function escapeListMarkers(text, escapeDash, escapeNum) {
 		.join('\n')
 }
 
+// Применение стиля к коду (через CSS класс)
 function applyCodeStyleSetting() {
 	if (processCodeStyleCheckbox.checked) {
 		preview.classList.remove('no-code-style')
 	} else {
 		preview.classList.add('no-code-style')
+	}
+}
+
+// Применение настройки отступов (через CSS класс)
+function applyTabulationSetting() {
+	if (removeIndentationCheckbox.checked) {
+		preview.classList.add('no-indentation')
+	} else {
+		preview.classList.remove('no-indentation')
 	}
 }
 

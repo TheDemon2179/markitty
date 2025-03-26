@@ -215,3 +215,32 @@ body.dark #formattingOptions select {
 	color: inherit !important; /* Наследовать цвет текста */
 	/* Добавьте !important, если стили marked.js или браузера перебивают */
 }
+
+/* Класс для подавления отступов --- */
+#preview.no-indentation p,
+#preview.no-indentation blockquote,
+#preview.no-indentation div {
+	/* Захватываем общие блочные элементы */
+	margin-left: 0 !important;
+	padding-left: 0 !important;
+	text-indent: 0 !important;
+}
+
+#preview.no-indentation ul,
+#preview.no-indentation ol {
+	margin-left: 0 !important; /* Убираем внешний отступ списка */
+	padding-left: 1.5em !important; /* Оставляем небольшой внутренний отступ для маркеров */
+	text-indent: 0 !important;
+}
+
+#preview.no-indentation li {
+	margin-left: 0 !important; /* Убираем отступ самого элемента списка */
+	padding-left: 0 !important;
+	text-indent: 0 !important;
+}
+
+#preview.no-indentation pre {
+	margin-left: 0 !important; /* Убираем отступ у блоков кода */
+	padding-left: 5px !important; /* Оставляем минимальный padding для читаемости */
+	text-indent: 0 !important;
+}
