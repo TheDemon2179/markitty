@@ -23,6 +23,15 @@ const disableCodeBlocksCheckbox = document.getElementById('disableCodeBlocks')
 const tableBorderStyleSelect = document.getElementById('tableBorderStyle')
 const forceJustifyCheckbox = document.getElementById('forceJustify')
 
+const fontSelector = document.getElementById('fontSelector')
+const resetFontBtn = document.getElementById('resetFontBtn')
+const lineHeightInput = document.getElementById('lineHeight')
+const spaceBeforeInput = document.getElementById('spaceBefore')
+const spaceAfterInput = document.getElementById('spaceAfter')
+const removeLinkUnderlineCheckbox = document.getElementById(
+	'removeLinkUnderline'
+)
+
 // Ключи для localStorage
 const THEME_KEY = 'darkTheme'
 const TEXT_KEY = 'markdownText'
@@ -42,6 +51,12 @@ const LOWERCASE_START_KEY = 'lowercaseListStart'
 const DISABLE_CODEBLOCK_KEY = 'disableCodeBlocks'
 const TABLE_BORDER_KEY = 'tableBorderStyle'
 const FORCE_JUSTIFY_KEY = 'forceJustify'
+
+const FONT_KEY = 'editorFont'
+const LINE_HEIGHT_KEY = 'lineHeight'
+const SPACE_BEFORE_KEY = 'spaceBefore'
+const SPACE_AFTER_KEY = 'spaceAfter'
+const NO_LINK_UNDERLINE_KEY = 'noLinkUnderline'
 
 // Загружаем тему из localStorage
 function loadTheme() {
@@ -114,12 +129,21 @@ function loadSettings() {
 		localStorage.getItem(TABLE_BORDER_KEY) || 'none' // По умолч. 'none'
 	forceJustifyCheckbox.checked =
 		localStorage.getItem(FORCE_JUSTIFY_KEY) === 'true' // По умолч. false
+	fontSelector.value = localStorage.getItem(FONT_KEY) || 'Times New Roman'
+	lineHeightInput.value = localStorage.getItem(LINE_HEIGHT_KEY) || '1.15'
+	spaceBeforeInput.value = localStorage.getItem(SPACE_BEFORE_KEY) || '0'
+	spaceAfterInput.value = localStorage.getItem(SPACE_AFTER_KEY) || '8'
+	removeLinkUnderlineCheckbox.checked =
+		localStorage.getItem(NO_LINK_UNDERLINE_KEY) === 'true'
 
 	// Применяем стиль кода сразу
+	applyFontSetting() // Применяем шрифт
+	applySpacingSettings() // Применяем интервалы
+	applyLinkUnderlineSetting() // Применяем стиль ссылок
 	applyCodeStyleSetting()
-	applyTabulationSetting() // Применяем настройку отступов
-	applyJustifySetting() // Применяем выравнивание
-	applyTableBorderStyle() // Применяем стиль таблиц
+	applyTabulationSetting()
+	applyJustifySetting()
+	applyTableBorderStyle()
 }
 
 // --- Сохранение настроек ---
@@ -137,6 +161,60 @@ function saveSettings() {
 	localStorage.setItem(DISABLE_CODEBLOCK_KEY, disableCodeBlocksCheckbox.checked)
 	localStorage.setItem(TABLE_BORDER_KEY, tableBorderStyleSelect.value)
 	localStorage.setItem(FORCE_JUSTIFY_KEY, forceJustifyCheckbox.checked)
+	localStorage.setItem(FONT_KEY, fontSelector.value)
+	localStorage.setItem(LINE_HEIGHT_KEY, lineHeightInput.value)
+	localStorage.setItem(SPACE_BEFORE_KEY, spaceBeforeInput.value)
+	localStorage.setItem(SPACE_AFTER_KEY, spaceAfterInput.value)
+	localStorage.setItem(
+		NO_LINK_UNDERLINE_KEY,
+		removeLinkUnderlineCheckbox.checked
+	)
+}
+
+// Применение шрифта
+function applyFontSetting() {
+	const selectedFont = fontSelector.value.trim() || 'Times New Roman' // Значение по умолчанию
+	// Добавляем кавычки, если шрифт содержит пробелы и не является стандартным ключевым словом CSS
+	const fontFamilyValue =
+		/ |^(serif|sans-serif|monospace|cursive|fantasy)$/.test(selectedFont)
+			? `'${selectedFont}'`
+			: selectedFont
+	// Добавляем базовый запасной шрифт
+	preview.style.fontFamily = `${fontFamilyValue}, Times, serif`
+}
+
+// Применение настроек интервалов
+function applySpacingSettings() {
+	const lineHeight = parseFloat(lineHeightInput.value) || 1.15
+	const spaceBefore = parseInt(spaceBeforeInput.value, 10) || 0
+	const spaceAfter = parseInt(spaceAfterInput.value, 10) || 8
+
+	// Используем CSS переменные (как определено в CSS)
+	document.documentElement.style.setProperty(
+		'--line-height-multiplier',
+		lineHeight
+	)
+	document.documentElement.style.setProperty(
+		'--paragraph-spacing-before',
+		`${spaceBefore}pt`
+	)
+	document.documentElement.style.setProperty(
+		'--paragraph-spacing-after',
+		`${spaceAfter}pt`
+	)
+
+	// Или можно напрямую менять стиль #preview для line-height, если переменные не работают
+	// preview.style.lineHeight = lineHeight;
+	// А для отступов абзацев придется проходиться по всем p, li и т.д. или использовать CSS классы
+}
+
+// Применение стиля подчеркивания ссылок
+function applyLinkUnderlineSetting() {
+	if (removeLinkUnderlineCheckbox.checked) {
+		preview.classList.add('no-link-underline')
+	} else {
+		preview.classList.remove('no-link-underline')
+	}
 }
 
 // Функция для рендеринга Markdown в HTML
@@ -152,37 +230,46 @@ function renderMarkdown() {
 	const processDash = processDashListCheckbox.checked
 	const processNum = processNumListCheckbox.checked
 
-	// ПОРЯДОК ВАЖЕН!
-	// 0. Экранируем ``` блоки кода (если включено)
-	markdownText = escapeCodeBlocks(markdownText, escapeCodeBl)
-
-	// 1. Преобразуем в нижний регистр НАЧАЛО элемента списка (если включено)
-	markdownText = lowercaseListItemStart(markdownText, makeStartLower)
-
-	// 2. Преобразуем в нижний регистр ПОСЛЕ двоеточия (если включено)
-	markdownText = lowercaseAfterColonInLists(markdownText, makeLowercase)
-
-	// 3. Добавляем пунктуацию в конце строк списка (если выбрано)
-	markdownText = addListEndingPunctuation(markdownText, addEnding)
-
-	// 4. Обрабатываем точки с запятыми (если включено ИЛИ для исправления последнего элемента)
-	markdownText = processSemicolonsInLists(markdownText, useSemicolons)
-
-	// 5. Экранируем маркеры списка (если преобразование ОТКЛЮЧЕНО)
-	markdownText = escapeListMarkers(markdownText, !processDash, !processNum)
+	// --- Пре-обработка ---
+	// 0. Экранируем ``` блоки кода
+	markdownText = escapeCodeBlocks(
+		markdownText,
+		disableCodeBlocksCheckbox.checked
+	)
+	// 1. Маленькая буква в НАЧАЛЕ элемента списка
+	markdownText = lowercaseListItemStart(
+		markdownText,
+		lowercaseListStartCheckbox.checked
+	)
+	// 2. Маленькая буква ПОСЛЕ двоеточия
+	markdownText = lowercaseAfterColonInLists(
+		markdownText,
+		lowercaseAfterColonCheckbox.checked
+	)
+	// 3. Добавляем пунктуацию в конце строк списка
+	markdownText = addListEndingPunctuation(markdownText, listEndingSelect.value)
+	// 4. Обрабатываем точки с запятыми
+	markdownText = processSemicolonsInLists(
+		markdownText,
+		useSemicolonsCheckbox.checked
+	)
+	// 5. Экранируем маркеры списка
+	markdownText = escapeListMarkers(
+		markdownText,
+		!processDashListCheckbox.checked,
+		!processNumListCheckbox.checked
+	)
+	// --- Конец пре-обработки ---
 
 	// 6. Рендерим с помощью Marked.js
-	// Очищаем рендерер marked для поддержки GitHub Flavored Markdown (GFM), особенно таблиц
-	marked.setOptions({
-		gfm: true, // Включаем GFM (таблицы, зачеркивание и т.д.)
-		breaks: false, // Поведение по умолчанию для переносов строк
-		pedantic: false, // Не быть слишком строгим к ошибкам Markdown
-		// другие опции можно добавить по необходимости
-	})
+	marked.setOptions({ gfm: true, breaks: false, pedantic: false })
 	const html = marked.parse(markdownText)
 	preview.innerHTML = html
 
-	// 7. Применяем CSS классы для стилизации ПОСЛЕ рендеринга
+	// 7. Применяем CSS классы и стили ПОСЛЕ рендеринга
+	applyFontSetting() // Шрифт
+	applySpacingSettings() // Интервалы
+	applyLinkUnderlineSetting() // Ссылки
 	applyCodeStyleSetting() // Инлайн-код
 	applyTabulationSetting() // Отступы
 	applyJustifySetting() // Выравнивание
@@ -310,51 +397,107 @@ renderBtn.addEventListener('click', () => {
 
 // Копирование HTML в буфер обмена
 copyBtn.addEventListener('click', async function () {
-	// 1. Клонируем содержимое preview, чтобы не менять оригинал
-	const previewClone = preview.cloneNode(true) // Глубокое клонирование
+	// 1. Клонируем содержимое preview
+	const previewClone = preview.cloneNode(true)
 
-	// 2. Получаем выбранный стиль рамок
+	// 2. Получаем текущие настройки стилей
+	const selectedFont = fontSelector.value.trim() || 'Times New Roman'
+	const fontFamilyValue =
+		/ |^(serif|sans-serif|monospace|cursive|fantasy)$/.test(selectedFont)
+			? `'${selectedFont}'`
+			: selectedFont
+	const lineHeight = parseFloat(lineHeightInput.value) || 1.15
+	const spaceBeforePt = `${parseInt(spaceBeforeInput.value, 10) || 0}pt`
+	const spaceAfterPt = `${parseInt(spaceAfterInput.value, 10) || 8}pt`
 	const borderStyle = tableBorderStyleSelect.value
+	const noUnderline = removeLinkUnderlineCheckbox.checked
+	const isJustified = forceJustifyCheckbox.checked // Проверяем выравнивание по ширине
 
-	// 3. Применяем инлайн-стили к таблицам в клоне для Word
+	// 3. Применяем стили к клону для Word
+
+	// 3.1. Глобальные стили для всего блока (Шрифт, межстрочный интервал, выравнивание)
+	// Лучше применить к самому previewClone ИЛИ обернуть всё в div со стилями
+	const wrapperDiv = document.createElement('div')
+	wrapperDiv.style.fontFamily = `${fontFamilyValue}, Times, serif`
+	wrapperDiv.style.lineHeight = lineHeight
+	if (isJustified) {
+		// Применяем выравнивание, если включено
+		wrapperDiv.style.textAlign = 'justify'
+	}
+	// Переносим все дочерние узлы из previewClone в wrapperDiv
+	while (previewClone.firstChild) {
+		wrapperDiv.appendChild(previewClone.firstChild)
+	}
+
+	// 3.2. Стили для отдельных элементов (Отступы абзацев, ссылки)
+	const elementsToSpace = wrapperDiv.querySelectorAll('p, ul, ol, blockquote') // Элементы, к которым применяем отступы
+	elementsToSpace.forEach(el => {
+		// Применяем только если это не пустой параграф внутри li
+		if (
+			!(
+				el.tagName === 'P' &&
+				el.parentNode.tagName === 'LI' &&
+				!el.textContent.trim()
+			)
+		) {
+			el.style.marginTop = spaceBeforePt
+			el.style.marginBottom = spaceAfterPt
+		}
+		if (el.tagName !== 'P') {
+			// Убираем отступы по умолчанию у списков, чтобы наши работали
+			el.style.paddingLeft = '0' // Если не используется no-indentation
+		}
+		// Если включено выравнивание, но это заголовок, сбрасываем его (по желанию)
+		if (
+			isJustified &&
+			['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(el.tagName)
+		) {
+			el.style.textAlign = 'left' // или 'center'
+		}
+	})
+
+	if (noUnderline) {
+		const links = wrapperDiv.querySelectorAll('a')
+		links.forEach(a => {
+			a.style.textDecoration = 'none'
+			// Можно также убрать синий цвет, если нужно полное сходство с текстом
+			// a.style.color = 'inherit';
+		})
+	}
+
+	// 3.3. Стили для таблиц (код остался прежним)
 	if (borderStyle !== 'none') {
-		const tables = previewClone.querySelectorAll('table')
+		const tables = wrapperDiv.querySelectorAll('table')
 		tables.forEach(table => {
+			// ... (код применения инлайн-стилей для рамок таблиц из предыдущего шага) ...
 			const cells = table.querySelectorAll('th, td')
 			const headerCells = table.querySelectorAll('th')
-
-			// Сбрасываем инлайн-стили рамки перед применением новых
 			table.style.border = 'none'
 			cells.forEach(cell => (cell.style.border = 'none'))
-
-			const borderValue = '1px solid black' // Стандартная рамка для Word
-
+			const borderValue = '1px solid black'
 			if (borderStyle === 'all') {
-				table.style.border = borderValue // Внешняя рамка таблицы может быть не нужна, если у всех ячеек есть
 				cells.forEach(cell => (cell.style.border = borderValue))
 			} else if (borderStyle === 'outer') {
 				table.style.border = borderValue
 			} else if (borderStyle === 'header') {
-				table.style.border = borderValue // Внешняя рамка
-				headerCells.forEach(th => (th.style.borderBottom = borderValue)) // Линия под шапкой
+				table.style.border = borderValue
+				headerCells.forEach(th => (th.style.borderBottom = borderValue))
 			}
-			// Устанавливаем border-collapse для корректного отображения
 			table.style.borderCollapse = 'collapse'
 		})
 	} else {
-		// Если выбран "none", убедимся, что инлайн-стили рамки убраны
-		const tables = previewClone.querySelectorAll('table')
+		const tables = wrapperDiv.querySelectorAll('table')
 		tables.forEach(table => {
 			table.style.border = 'none'
-			table.style.borderCollapse = 'collapse' // Все равно полезно
+			table.style.borderCollapse = 'collapse'
 			table
 				.querySelectorAll('th, td')
 				.forEach(cell => (cell.style.border = 'none'))
 		})
 	}
 
-	// 4. Получаем HTML из обработанного клона
-	const htmlContent = previewClone.innerHTML
+	// 4. Получаем HTML из обертки wrapperDiv
+	const htmlContent = wrapperDiv.innerHTML
 
 	// 5. Копируем в буфер
 	const blobInput = new Blob([htmlContent], { type: 'text/html' })
@@ -414,6 +557,32 @@ tableBorderStyleSelect.addEventListener('change', () => {
 
 forceJustifyCheckbox.addEventListener('change', () => {
 	applyJustifySetting() // Достаточно применить стиль
+	saveSettings()
+})
+fontSelector.addEventListener('change', () => {
+	// Используем 'change' для select
+	applyFontSetting()
+	saveSettings()
+})
+resetFontBtn.addEventListener('click', () => {
+	fontSelector.value = 'Times New Roman' // Устанавливаем значение по умолчанию
+	applyFontSetting()
+	saveSettings()
+})
+lineHeightInput.addEventListener('change', () => {
+	applySpacingSettings()
+	saveSettings()
+})
+spaceBeforeInput.addEventListener('change', () => {
+	applySpacingSettings()
+	saveSettings()
+})
+spaceAfterInput.addEventListener('change', () => {
+	applySpacingSettings()
+	saveSettings()
+})
+removeLinkUnderlineCheckbox.addEventListener('change', () => {
+	applyLinkUnderlineSetting()
 	saveSettings()
 })
 

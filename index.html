@@ -17,81 +17,128 @@
 		<fieldset id="formattingOptions">
 			<legend>Настройки форматирования</legend>
 
-			<div>
-				<input type="checkbox" id="processDashList" checked />
-				<label for="processDashList">Преобразовывать '-' в список</label>
+			<!-- Блок: Списки -->
+			<div class="option-group">
+				<div class="option-group-title">Списки:</div>
+				<div>
+					<input type="checkbox" id="processDashList" checked />
+					<label for="processDashList">Преобразовывать '-' в список</label>
+				</div>
+				<div>
+					<input type="checkbox" id="processNumList" checked />
+					<label for="processNumList">Преобразовывать '1.' в список</label>
+				</div>
+				<div>
+					<input type="checkbox" id="lowercaseListStart" />
+					<label for="lowercaseListStart"
+						>Маленькая буква в начале элемента</label
+					>
+				</div>
+				<div>
+					<input type="checkbox" id="lowercaseAfterColon" />
+					<label for="lowercaseAfterColon">Маленькая буква после ':'</label>
+				</div>
+				<div>
+					<input type="checkbox" id="useSemicolons" />
+					<label for="useSemicolons"
+						>Заменять '.' на ';' (кроме последнего)</label
+					>
+				</div>
+				<div>
+					<label for="listEndingPunctuation">Добавить в конце строк:</label>
+					<select id="listEndingPunctuation">
+						<option value="none">Нет</option>
+						<option value=".">Точка (.)</option>
+						<option value=",">Запятая (,)</option>
+						<option value=";">Точка с запятой (;)</option>
+					</select>
+				</div>
 			</div>
 
-			<div>
-				<input type="checkbox" id="processNumList" checked />
-				<label for="processNumList">Преобразовывать '1.' в список</label>
+			<!-- Блок: Код и Таблицы -->
+			<div class="option-group">
+				<div class="option-group-title">Код, Таблицы, Ссылки:</div>
+				<div>
+					<input type="checkbox" id="disableCodeBlocks" />
+					<label for="disableCodeBlocks">Отключить ```блоки кода```</label>
+				</div>
+				<div>
+					<input type="checkbox" id="processCodeStyle" checked />
+					<label for="processCodeStyle">Стиль `инлайн-кода`</label>
+				</div>
+				<div>
+					<input type="checkbox" id="removeLinkUnderline" />
+					<!-- НОВОЕ -->
+					<label for="removeLinkUnderline">Убрать подчеркивание ссылок</label>
+					<!-- НОВОЕ -->
+				</div>
+				<div>
+					<label for="tableBorderStyle">Рамки таблиц:</label>
+					<select id="tableBorderStyle">
+						<option value="none">Нет рамок (Word)</option>
+						<option value="all">Все рамки</option>
+						<option value="outer">Только внешние</option>
+						<option value="header">Шапка + внешние</option>
+					</select>
+				</div>
 			</div>
 
-			<div>
-				<input type="checkbox" id="lowercaseListStart" />
-				<label for="lowercaseListStart"
-					>Маленькая буква в начале элемента списка</label
-				>
+			<!-- Блок: Шрифты и Интервалы -->
+			<div class="option-group">
+				<div class="option-group-title">Шрифт и Интервалы:</div>
+				<div>
+					<label for="fontSelector">Шрифт:</label>
+					<!-- ЗАМЕНА: Используем select вместо input+datalist -->
+					<select id="fontSelector" name="fontSelector">
+						<option value="Times New Roman">Times New Roman</option>
+						<option value="Arial">Arial</option>
+						<option value="Calibri">Calibri</option>
+						<option value="Verdana">Verdana</option>
+						<option value="Georgia">Georgia</option>
+						<option value="Tahoma">Tahoma</option>
+						<option value="Courier New">Courier New</option>
+						<option value="Segoe UI">Segoe UI</option>
+						<!-- Можно добавить еще -->
+					</select>
+					<button id="resetFontBtn" title="Сбросить шрифт">⟲</button>
+				</div>
+				<div>
+					<label for="lineHeight">Межстрочный:</label>
+					<!-- НОВОЕ -->
+					<input
+						type="number"
+						id="lineHeight"
+						value="1.15"
+						step="0.05"
+						min="1.0"
+					/>
+					<!-- НОВОЕ (множитель) -->
+				</div>
+				<div>
+					<label for="spaceBefore">Интервал перед (pt):</label>
+					<!-- НОВОЕ -->
+					<input type="number" id="spaceBefore" value="0" step="1" min="0" />
+					<!-- НОВОЕ (в пунктах) -->
+				</div>
+				<div>
+					<label for="spaceAfter">Интервал после (pt):</label>
+					<!-- НОВОЕ -->
+					<input type="number" id="spaceAfter" value="8" step="1" min="0" />
+					<!-- НОВОЕ (в пунктах, по умолч. как в Word) -->
+				</div>
 			</div>
 
-			<div>
-				<input type="checkbox" id="useSemicolons" />
-				<label for="useSemicolons"
-					>Заменять '.' на ';' в списках (кроме последнего)</label
-				>
-			</div>
-
-			<div>
-				<label for="listEndingPunctuation"
-					>Добавить в конце строк списка:</label
-				>
-				<select id="listEndingPunctuation">
-					<option value="none">Нет</option>
-					<option value=".">Точка (.)</option>
-					<option value=",">Запятая (,)</option>
-					<option value=";">Точка с запятой (;)</option>
-				</select>
-			</div>
-
-			<div>
-				<input type="checkbox" id="disableCodeBlocks" />
-				<label for="disableCodeBlocks"
-					>Отключить форматирование ```блоков кода```</label
-				>
-			</div>
-
-			<div>
-				<input type="checkbox" id="processCodeStyle" checked />
-				<label for="processCodeStyle">Применять стиль к `инлайн-коду`</label>
-			</div>
-
-			<div>
-				<label for="tableBorderStyle">Рамки таблиц:</label>
-				<select id="tableBorderStyle">
-					<option value="none">Нет рамок (Word)</option>
-					<option value="all">Все рамки</option>
-					<option value="outer">Только внешние</option>
-					<option value="header">Шапка + внешние</option>
-				</select>
-			</div>
-
-			<div>
-				<input type="checkbox" id="lowercaseAfterColon" />
-				<label for="lowercaseAfterColon"
-					>Маленькая буква после ':' в списках</label
-				>
-			</div>
-
-			<div>
-				<input type="checkbox" id="removeIndentation" />
-				<label for="removeIndentation"
-					>Убрать отступы слева (подавить табуляцию)</label
-				>
-			</div>
-
-			<div>
-				<input type="checkbox" id="forceJustify" />
-				<label for="forceJustify">Выравнивание по ширине</label>
+			<!-- Блок: Выравнивание и Отступы -->
+			<div class="option-group">
+				<div class="option-group-title">Выравнивание и Отступы:</div>
+				<div>
+					<input type="checkbox" id="removeIndentation" />
+					<label for="removeIndentation">Убрать отступы слева</label>
+				</div>
+				<div>
+					<input type="checkbox" id="forceJustify" />
+					<label for="forceJustify">Выравнивание по ширине</label>
+				</div>
 			</div>
 		</fieldset>
 		<!-- Конец Настроек форматирования -->
@@ -102,7 +149,11 @@
 			<button id="prevHistory">← Назад</button>
 			<button id="nextHistory">Вперёд →</button>
 		</div>
-		<div id="preview"></div>
+		<div
+			id="preview"
+			style="font-family: 'Times New Roman'; line-height: 1.15"
+		></div>
+		<!-- Добавил инлайн стили по умолчанию -->
 		<button id="copyBtn">Скопировать для Word</button>
 
 		<!-- Плавающая кнопка для действий по выделенному тексту -->

@@ -145,25 +145,32 @@ button:active {
 /* Стили для блока настроек */
 #formattingOptions {
 	margin-top: 15px;
-	padding: 15px;
+	padding: 10px; /* Уменьшим общий padding */
 	border: 1px solid #ccc;
 	border-radius: 8px;
-	background-color: #f9f9f9; /* Чуть светлее фона */
+	background-color: #f9f9f9;
+	display: flex; /* Включаем Flexbox */
+	flex-wrap: wrap; /* Позволяем группам переноситься */
+	gap: 10px; /* Пространство между группами */
+	justify-content: space-around; /* Распределение групп */
 }
 
 body.dark #formattingOptions {
 	border-color: #555;
-	background-color: #3a3a3a; /* Чуть светлее темного фона */
+	background-color: #3a3a3a;
 }
 
 #formattingOptions legend {
 	font-weight: bold;
 	padding: 0 10px;
-	color: #333; /* Цвет заголовка в светлой теме */
+	color: #333;
+	width: 100%; /* Заголовок на всю ширину перед группами */
+	margin-bottom: 10px; /* Отступ после заголовка */
+	text-align: center; /* Центрируем легенду */
 }
 
 body.dark #formattingOptions legend {
-	color: #ddd; /* Цвет заголовка в темной теме */
+	color: #ddd;
 }
 
 #formattingOptions div {
@@ -197,6 +204,45 @@ body.dark #formattingOptions label {
 	color: #333;
 	margin-left: 5px; /* Небольшой отступ слева */
 	cursor: pointer;
+}
+
+#formattingOptions select#lineHeightType {
+	/* Стили как у других select */
+	padding: 5px 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+	color: #333;
+	cursor: pointer;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+body.dark #formattingOptions select#lineHeightType {
+	border-color: #555;
+	background-color: #333;
+	color: #ddd;
+}
+
+#formattingOptions input#lineHeightValue {
+	/* Стили как у других number input */
+	width: 60px;
+	padding: 4px 6px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+body.dark #formattingOptions input#lineHeightValue {
+	border-color: #555;
+	background-color: #333;
+	color: #ddd;
+}
+
+#formattingOptions span#lineHeightUnit {
+	margin-left: 3px;
+	font-size: 0.9em;
+	color: #555;
+}
+body.dark #formattingOptions span#lineHeightUnit {
+	color: #bbb;
 }
 
 body.dark #formattingOptions select {
@@ -345,10 +391,159 @@ body.dark #preview.table-border-header th {
 
 /* Применяется к label внутри div, который содержит select */
 #formattingOptions div:has(select) label {
-	flex-grow: 0; /* Запрещаем этому label растягиваться */
-	margin-right: 10px; /* Добавляем отступ СПРАВА от label перед select */
+	flex-grow: 0;
+	margin-right: 10px;
+	/* Добавим немного гибкости для узких экранов, если текст длинный */
+	/* flex-shrink: 1; */ /* Можно раскомментировать, если нужно сжатие */
 }
 /* Применяется к select внутри div, который содержит select */
+#formattingOptions div:has(select) select,
+#formattingOptions div:has(input[list]) input {
+	/* И для input с datalist */
+	flex-grow: 1; /* Позволим селекту/инпуту занять место */
+	min-width: 100px; /* Минимальная ширина для читаемости */
+}
+#resetFontBtn {
+	flex-shrink: 0; /* Кнопка сброса не должна сжиматься */
+}
+
+#formattingOptions .option-group {
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	padding: 10px 15px; /* Вернул нормальный padding */
+	/* Убираем margin-bottom, так как gap теперь управляет отступом */
+	background-color: #fff;
+	flex-grow: 1; /* Позволяем группам расти */
+	flex-basis: 280px; /* Минимальная ширина группы перед переносом */
+	min-width: 250px; /* Абсолютный минимум для узких экранов */
+	box-sizing: border-box; /* Учитываем padding и border в ширине */
+	flex-direction: column;
+}
+body.dark #formattingOptions .option-group {
+	border-color: #444;
+	background-color: #303030;
+}
+#formattingOptions .option-group-title {
+	font-weight: bold;
+	margin-bottom: 10px;
+	color: #555;
+	font-size: 0.95em;
+}
+body.dark #formattingOptions .option-group-title {
+	color: #bbb;
+}
+#formattingOptions .option-group > div {
+	/* Стили для строк внутри группы */
+	margin-bottom: 8px; /* Уменьшил отступ между строками */
+	display: flex;
+	align-items: center;
+}
+
+/* Стили для полей ввода number */
+#formattingOptions input[type='number'] {
+	width: 60px; /* Фиксированная ширина */
+	padding: 4px 6px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	margin-left: 5px;
+}
+body.dark #formattingOptions input[type='number'] {
+	border-color: #555;
+	background-color: #333;
+	color: #ddd;
+}
+
+/* Стили для выбора шрифта */
+#formattingOptions input#fontSelector {
+	flex-grow: 1; /* Позволяем полю ввода растягиваться */
+	margin-left: 5px;
+	margin-right: 5px; /* Отступ перед кнопкой сброса */
+	padding: 4px 6px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+body.dark #formattingOptions input#fontSelector {
+	border-color: #555;
+	background-color: #333;
+	color: #ddd;
+}
+#resetFontBtn {
+	padding: 4px 8px;
+	font-size: 14px;
+	min-width: auto; /* Убираем минимальную ширину кнопки */
+	margin-left: 0; /* Убираем лишний отступ */
+	margin-top: 0; /* Убираем лишний отступ */
+	line-height: 1; /* Выравнивание символа */
+	background-color: #eee;
+	color: #333;
+	border: 1px solid #ccc;
+}
+#resetFontBtn:hover {
+	background-color: #ddd;
+}
+body.dark #resetFontBtn {
+	background-color: #444;
+	color: #ddd;
+	border-color: #666;
+}
+body.dark #resetFontBtn:hover {
+	background-color: #555;
+}
+
+/* --- CSS Переменные и классы для интервалов и ссылок --- */
+:root {
+	/* Определяем переменные в корне */
+	--paragraph-spacing-before: 0pt; /* Значения по умолчанию */
+	--paragraph-spacing-after: 8pt;
+	--line-height-multiplier: 1.15;
+}
+
+#preview {
+	/* Применяем стили по умолчанию через переменные или напрямую */
+	font-family: 'Times New Roman', Times, serif; /* Шрифт по умолчанию */
+	line-height: var(--line-height-multiplier); /* Междустрочный интервал */
+	/* Отступы будут применяться к p и li ниже */
+}
+
+#preview p,
+#preview ul,
+#preview ol,
+#preview blockquote {
+	/* Применяем отступы к основным блокам */
+	margin-top: var(--paragraph-spacing-before);
+	margin-bottom: var(--paragraph-spacing-after);
+}
+#preview li > p {
+	/* Убираем лишние отступы у параграфов внутри li */
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* Класс для скрытия подчеркивания ссылок */
+#preview.no-link-underline a {
+	text-decoration: none !important;
+}
+
+#formattingOptions select #fontSelector {
+	flex-grow: 1; /* Позволяем селекту растягиваться */
+	margin-left: 5px;
+	margin-right: 5px;
+	padding: 5px 8px; /* Стандартный padding для select */
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+	color: #333;
+	cursor: pointer;
+	min-width: 120px; /* Немного больше для селекта */
+}
+body.dark #formattingOptions select #fontSelector {
+	border-color: #555;
+	background-color: #333;
+	color: #ddd;
+}
+
 #formattingOptions div:has(select) select {
-	margin-left: 0; /* Убедимся, что левый отступ у select сброшен */
+	flex-grow: 1; /* Переопределяем, если нужно */
+	min-width: 100px;
+	margin-left: 0; /* Сбрасываем отступ слева */
 }
