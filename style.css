@@ -342,3 +342,13 @@ body.dark #preview.table-border-header th {
 #preview.table-border-none td {
 	border: none !important;
 }
+
+/* Применяется к label внутри div, который содержит select */
+#formattingOptions div:has(select) label {
+	flex-grow: 0; /* Запрещаем этому label растягиваться */
+	margin-right: 10px; /* Добавляем отступ СПРАВА от label перед select */
+}
+/* Применяется к select внутри div, который содержит select */
+#formattingOptions div:has(select) select {
+	margin-left: 0; /* Убедимся, что левый отступ у select сброшен */
+}
