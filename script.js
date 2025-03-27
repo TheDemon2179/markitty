@@ -18,6 +18,11 @@ const lowercaseAfterColonCheckbox = document.getElementById(
 )
 const removeIndentationCheckbox = document.getElementById('removeIndentation')
 
+const lowercaseListStartCheckbox = document.getElementById('lowercaseListStart')
+const disableCodeBlocksCheckbox = document.getElementById('disableCodeBlocks')
+const tableBorderStyleSelect = document.getElementById('tableBorderStyle')
+const forceJustifyCheckbox = document.getElementById('forceJustify')
+
 // Ключи для localStorage
 const THEME_KEY = 'darkTheme'
 const TEXT_KEY = 'markdownText'
@@ -32,6 +37,11 @@ const PROCESS_CODE_STYLE_KEY = 'processCodeStyle'
 
 const LOWERCASE_COLON_KEY = 'lowercaseAfterColon'
 const REMOVE_INDENT_KEY = 'removeIndentation'
+
+const LOWERCASE_START_KEY = 'lowercaseListStart'
+const DISABLE_CODEBLOCK_KEY = 'disableCodeBlocks'
+const TABLE_BORDER_KEY = 'tableBorderStyle'
+const FORCE_JUSTIFY_KEY = 'forceJustify'
 
 // Загружаем тему из localStorage
 function loadTheme() {
@@ -96,10 +106,20 @@ function loadSettings() {
 		localStorage.getItem(LOWERCASE_COLON_KEY) === 'true' // По умолчанию false
 	removeIndentationCheckbox.checked =
 		localStorage.getItem(REMOVE_INDENT_KEY) === 'true' // По умолчанию false
+	lowercaseListStartCheckbox.checked =
+		localStorage.getItem(LOWERCASE_START_KEY) === 'true' // По умолч. false
+	disableCodeBlocksCheckbox.checked =
+		localStorage.getItem(DISABLE_CODEBLOCK_KEY) === 'true' // По умолч. false
+	tableBorderStyleSelect.value =
+		localStorage.getItem(TABLE_BORDER_KEY) || 'none' // По умолч. 'none'
+	forceJustifyCheckbox.checked =
+		localStorage.getItem(FORCE_JUSTIFY_KEY) === 'true' // По умолч. false
 
 	// Применяем стиль кода сразу
 	applyCodeStyleSetting()
 	applyTabulationSetting() // Применяем настройку отступов
+	applyJustifySetting() // Применяем выравнивание
+	applyTableBorderStyle() // Применяем стиль таблиц
 }
 
 // --- Сохранение настроек ---
@@ -113,6 +133,10 @@ function saveSettings() {
 	localStorage.setItem(PROCESS_CODE_STYLE_KEY, processCodeStyleCheckbox.checked)
 	localStorage.setItem(LOWERCASE_COLON_KEY, lowercaseAfterColonCheckbox.checked)
 	localStorage.setItem(REMOVE_INDENT_KEY, removeIndentationCheckbox.checked)
+	localStorage.setItem(LOWERCASE_START_KEY, lowercaseListStartCheckbox.checked)
+	localStorage.setItem(DISABLE_CODEBLOCK_KEY, disableCodeBlocksCheckbox.checked)
+	localStorage.setItem(TABLE_BORDER_KEY, tableBorderStyleSelect.value)
+	localStorage.setItem(FORCE_JUSTIFY_KEY, forceJustifyCheckbox.checked)
 }
 
 // Функция для рендеринга Markdown в HTML
@@ -120,36 +144,140 @@ function renderMarkdown() {
 	let markdownText = markdownInput.value
 
 	// Получаем текущие настройки
+	const escapeCodeBl = disableCodeBlocksCheckbox.checked // Новое
+	const makeStartLower = lowercaseListStartCheckbox.checked // Новое
+	const makeLowercase = lowercaseAfterColonCheckbox.checked
 	const addEnding = listEndingSelect.value
 	const useSemicolons = useSemicolonsCheckbox.checked
 	const processDash = processDashListCheckbox.checked
 	const processNum = processNumListCheckbox.checked
-	const makeLowercase = lowercaseAfterColonCheckbox.checked // Новая настройка
 
 	// ПОРЯДОК ВАЖЕН!
-	// 0. Преобразуем в нижний регистр после двоеточия (если включено)
+	// 0. Экранируем ``` блоки кода (если включено)
+	markdownText = escapeCodeBlocks(markdownText, escapeCodeBl)
+
+	// 1. Преобразуем в нижний регистр НАЧАЛО элемента списка (если включено)
+	markdownText = lowercaseListItemStart(markdownText, makeStartLower)
+
+	// 2. Преобразуем в нижний регистр ПОСЛЕ двоеточия (если включено)
 	markdownText = lowercaseAfterColonInLists(markdownText, makeLowercase)
 
-	// 1. Добавляем пунктуацию в конце строк списка (если выбрано)
+	// 3. Добавляем пунктуацию в конце строк списка (если выбрано)
 	markdownText = addListEndingPunctuation(markdownText, addEnding)
 
-	// 2. Обрабатываем точки с запятыми (если включено ИЛИ для исправления последнего элемента)
+	// 4. Обрабатываем точки с запятыми (если включено ИЛИ для исправления последнего элемента)
 	markdownText = processSemicolonsInLists(markdownText, useSemicolons)
 
-	// 3. Экранируем маркеры списка (если преобразование ОТКЛЮЧЕНО)
+	// 5. Экранируем маркеры списка (если преобразование ОТКЛЮЧЕНО)
 	markdownText = escapeListMarkers(markdownText, !processDash, !processNum)
 
-	// 4. Рендерим с помощью Marked.js
+	// 6. Рендерим с помощью Marked.js
+	// Очищаем рендерер marked для поддержки GitHub Flavored Markdown (GFM), особенно таблиц
+	marked.setOptions({
+		gfm: true, // Включаем GFM (таблицы, зачеркивание и т.д.)
+		breaks: false, // Поведение по умолчанию для переносов строк
+		pedantic: false, // Не быть слишком строгим к ошибкам Markdown
+		// другие опции можно добавить по необходимости
+	})
 	const html = marked.parse(markdownText)
 	preview.innerHTML = html
 
-	// 5. Применяем настройку стиля кода (через CSS)
-	applyCodeStyleSetting()
-
-	// 6. Применяем настройку отступов (через CSS)
-	applyTabulationSetting()
+	// 7. Применяем CSS классы для стилизации ПОСЛЕ рендеринга
+	applyCodeStyleSetting() // Инлайн-код
+	applyTabulationSetting() // Отступы
+	applyJustifySetting() // Выравнивание
+	applyTableBorderStyle() // Рамки таблиц
 
 	// Сохранение настроек происходит в обработчиках событий
+}
+
+// Экранирование блоков кода ```
+function escapeCodeBlocks(text, enabled) {
+	if (!enabled) return text
+	// Заменяем строки, начинающиеся с ``` (с возможным языком) и строки, состоящие только из ```,
+	// на их экранированную версию (\```). Marked.js должен их проигнорировать.
+	// Используем lookbehind (?<=...) и lookahead (?=...) чтобы не захватывать пробелы вокруг
+	// и обрабатывать строки правильно, даже если ``` не в самом начале/конце строки (хотя обычно они там)
+	// Простая замена должна сработать для большинства случаев:
+	return text
+		.replace(/^( *```.*)$/gm, '\\$1') // Экранируем ``` в начале строки
+		.replace(/\\( *```.*)$/, '$1') // Убираем экранирование, если оно уже было (на всякий случай)
+	// Простая замена может быть не идеальна для вложенных или инлайн ```, но должна покрыть основные случаи.
+	// Более надежный, но сложный способ - парсить состояния (внутри блока/снаружи).
+	// Для простоты пока остановимся на замене строк.
+}
+
+// Маленькая буква в НАЧАЛЕ элемента списка
+function lowercaseListItemStart(text, enabled) {
+	if (!enabled) return text
+
+	const lines = text.split('\n')
+	const listMarkerRegex = /^(\s*)(?:-|\*|\+|\d+\.)(\s+)/
+	const markdownCharsToIgnore = ['*', '_', '`', '~', '[', '<'] // Символы разметки для игнорирования
+
+	return lines
+		.map(line => {
+			const match = line.match(listMarkerRegex)
+
+			if (match) {
+				const markerAndSpacesLength = match[0].length // Длина маркера и пробелов после него
+				let firstLetterIndex = -1
+				let firstLetter = ''
+
+				// Ищем индекс первой БУКВЫ после маркера списка, пропуская пробелы и символы разметки
+				for (let i = markerAndSpacesLength; i < line.length; i++) {
+					const char = line[i]
+					if (/\s/.test(char)) continue
+					if (markdownCharsToIgnore.includes(char)) continue
+
+					firstLetterIndex = i
+					firstLetter = char
+					break
+				}
+
+				// Если первая буква найдена и она заглавная
+				if (
+					firstLetterIndex !== -1 &&
+					firstLetter !== firstLetter.toLowerCase() &&
+					firstLetter === firstLetter.toUpperCase()
+				) {
+					const lowerChar = firstLetter.toLowerCase()
+					return (
+						line.substring(0, firstLetterIndex) +
+						lowerChar +
+						line.substring(firstLetterIndex + 1)
+					)
+				}
+			}
+			return line // Возвращаем строку без изменений
+		})
+		.join('\n')
+}
+
+// Применение стиля рамок таблиц
+function applyTableBorderStyle() {
+	const style = tableBorderStyleSelect.value || 'none'
+	preview.classList.remove(
+		'table-border-none',
+		'table-border-all',
+		'table-border-outer',
+		'table-border-header'
+	) // Сначала убираем все классы
+	if (style !== 'none') {
+		// Добавляем нужный класс, если не 'none'
+		preview.classList.add(`table-border-${style}`)
+	} else {
+		preview.classList.add(`table-border-none`) // Явно добавляем класс none
+	}
+}
+
+// Применение выравнивания по ширине
+function applyJustifySetting() {
+	if (forceJustifyCheckbox.checked) {
+		preview.classList.add('force-justify')
+	} else {
+		preview.classList.remove('force-justify')
+	}
 }
 
 // Обновление истории (сохраняем не более 5 версий)
@@ -182,12 +310,58 @@ renderBtn.addEventListener('click', () => {
 
 // Копирование HTML в буфер обмена
 copyBtn.addEventListener('click', async function () {
-	const htmlContent = preview.innerHTML
+	// 1. Клонируем содержимое preview, чтобы не менять оригинал
+	const previewClone = preview.cloneNode(true) // Глубокое клонирование
+
+	// 2. Получаем выбранный стиль рамок
+	const borderStyle = tableBorderStyleSelect.value
+
+	// 3. Применяем инлайн-стили к таблицам в клоне для Word
+	if (borderStyle !== 'none') {
+		const tables = previewClone.querySelectorAll('table')
+		tables.forEach(table => {
+			const cells = table.querySelectorAll('th, td')
+			const headerCells = table.querySelectorAll('th')
+
+			// Сбрасываем инлайн-стили рамки перед применением новых
+			table.style.border = 'none'
+			cells.forEach(cell => (cell.style.border = 'none'))
+
+			const borderValue = '1px solid black' // Стандартная рамка для Word
+
+			if (borderStyle === 'all') {
+				table.style.border = borderValue // Внешняя рамка таблицы может быть не нужна, если у всех ячеек есть
+				cells.forEach(cell => (cell.style.border = borderValue))
+			} else if (borderStyle === 'outer') {
+				table.style.border = borderValue
+			} else if (borderStyle === 'header') {
+				table.style.border = borderValue // Внешняя рамка
+				headerCells.forEach(th => (th.style.borderBottom = borderValue)) // Линия под шапкой
+			}
+			// Устанавливаем border-collapse для корректного отображения
+			table.style.borderCollapse = 'collapse'
+		})
+	} else {
+		// Если выбран "none", убедимся, что инлайн-стили рамки убраны
+		const tables = previewClone.querySelectorAll('table')
+		tables.forEach(table => {
+			table.style.border = 'none'
+			table.style.borderCollapse = 'collapse' // Все равно полезно
+			table
+				.querySelectorAll('th, td')
+				.forEach(cell => (cell.style.border = 'none'))
+		})
+	}
+
+	// 4. Получаем HTML из обработанного клона
+	const htmlContent = previewClone.innerHTML
+
+	// 5. Копируем в буфер
 	const blobInput = new Blob([htmlContent], { type: 'text/html' })
 	const clipboardItemInput = new ClipboardItem({ 'text/html': blobInput })
 	try {
 		await navigator.clipboard.write([clipboardItemInput])
-		alert('Скопировано в буфер обмена!')
+		alert('Скопировано в буфер обмена для Word!')
 	} catch (err) {
 		alert('Ошибка при копировании: ' + err)
 	}
@@ -221,6 +395,25 @@ lowercaseAfterColonCheckbox.addEventListener('change', () => {
 removeIndentationCheckbox.addEventListener('change', () => {
 	// Не нужно перерендеривать Markdown, только применить/убрать CSS класс
 	applyTabulationSetting()
+	saveSettings()
+})
+lowercaseListStartCheckbox.addEventListener('change', () => {
+	renderMarkdown()
+	saveSettings()
+})
+
+disableCodeBlocksCheckbox.addEventListener('change', () => {
+	renderMarkdown() // Нужно перерендерить, т.к. меняем исходный Markdown
+	saveSettings()
+})
+
+tableBorderStyleSelect.addEventListener('change', () => {
+	applyTableBorderStyle() // Достаточно применить стиль
+	saveSettings()
+})
+
+forceJustifyCheckbox.addEventListener('change', () => {
+	applyJustifySetting() // Достаточно применить стиль
 	saveSettings()
 })
 

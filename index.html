@@ -28,6 +28,13 @@
 			</div>
 
 			<div>
+				<input type="checkbox" id="lowercaseListStart" />
+				<label for="lowercaseListStart"
+					>Маленькая буква в начале элемента списка</label
+				>
+			</div>
+
+			<div>
 				<input type="checkbox" id="useSemicolons" />
 				<label for="useSemicolons"
 					>Заменять '.' на ';' в списках (кроме последнего)</label
@@ -47,8 +54,25 @@
 			</div>
 
 			<div>
+				<input type="checkbox" id="disableCodeBlocks" />
+				<label for="disableCodeBlocks"
+					>Отключить форматирование ```блоков кода```</label
+				>
+			</div>
+
+			<div>
 				<input type="checkbox" id="processCodeStyle" checked />
-				<label for="processCodeStyle">Применять стиль к `коду`</label>
+				<label for="processCodeStyle">Применять стиль к `инлайн-коду`</label>
+			</div>
+
+			<div>
+				<label for="tableBorderStyle">Рамки таблиц:</label>
+				<select id="tableBorderStyle">
+					<option value="none">Нет рамок (Word)</option>
+					<option value="all">Все рамки</option>
+					<option value="outer">Только внешние</option>
+					<option value="header">Шапка + внешние</option>
+				</select>
 			</div>
 
 			<div>
@@ -63,6 +87,11 @@
 				<label for="removeIndentation"
 					>Убрать отступы слева (подавить табуляцию)</label
 				>
+			</div>
+
+			<div>
+				<input type="checkbox" id="forceJustify" />
+				<label for="forceJustify">Выравнивание по ширине</label>
 			</div>
 		</fieldset>
 		<!-- Конец Настроек форматирования -->

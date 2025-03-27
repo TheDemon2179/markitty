@@ -244,3 +244,101 @@ body.dark #formattingOptions select {
 	padding-left: 5px !important; /* Оставляем минимальный padding для читаемости */
 	text-indent: 0 !important;
 }
+
+/* Класс для отключения стиля кода */
+#preview.no-code-style code {
+	/*...*/
+}
+
+/* Класс для подавления отступов */
+#preview.no-indentation p, /*...*/
+#preview.no-indentation ul, /*...*/
+#preview.no-indentation li, /*...*/
+#preview.no-indentation pre {
+	/*...*/
+}
+
+/* --- НОВОЕ: Класс для выравнивания по ширине --- */
+#preview.force-justify {
+	text-align: justify !important;
+}
+/* Чтобы выравнивание по ширине не ломало центрирование заголовков */
+#preview.force-justify h1,
+#preview.force-justify h2,
+#preview.force-justify h3,
+#preview.force-justify h4,
+#preview.force-justify h5,
+#preview.force-justify h6 {
+	text-align: left; /* Или center, если нужно оставить заголовки по центру */
+}
+
+/* Стили по умолчанию (без рамок, но с отступами) */
+#preview table {
+	border-collapse: collapse; /* Важно для корректных рамок */
+	width: auto; /* Или 100% если нужно по ширине */
+	margin-top: 1em;
+	margin-bottom: 1em;
+	border: none; /* По умолчанию нет */
+}
+#preview th,
+#preview td {
+	padding: 8px 12px;
+	border: none; /* По умолчанию нет */
+	text-align: left;
+}
+#preview th {
+	font-weight: bold;
+	background-color: #f0f0f0; /* Легкий фон для шапки */
+}
+body.dark #preview th {
+	background-color: #3a3a3a;
+}
+
+/* Стиль: Все рамки */
+#preview.table-border-all table,
+#preview.table-border-all th,
+#preview.table-border-all td {
+	border: 1px solid #ccc;
+}
+body.dark #preview.table-border-all table,
+body.dark #preview.table-border-all th,
+body.dark #preview.table-border-all td {
+	border-color: #666;
+}
+
+/* Стиль: Только внешние рамки */
+#preview.table-border-outer table {
+	border: 1px solid #ccc;
+}
+#preview.table-border-outer th,
+#preview.table-border-outer td {
+	border: none; /* Убираем внутренние рамки */
+}
+body.dark #preview.table-border-outer table {
+	border-color: #666;
+}
+
+/* Стиль: Шапка + внешние */
+#preview.table-border-header table {
+	border: 1px solid #ccc; /* Внешняя рамка таблицы */
+}
+#preview.table-border-header th {
+	border-bottom: 1px solid #ccc; /* Линия под шапкой */
+	border-left: none; /* Убираем боковые рамки у ячеек шапки */
+	border-right: none;
+	border-top: none;
+}
+#preview.table-border-header td {
+	border: none; /* Убираем рамки у обычных ячеек */
+}
+body.dark #preview.table-border-header table,
+body.dark #preview.table-border-header th {
+	border-color: #666;
+}
+
+/* Убираем рамки, если выбрано "Нет рамок" (на всякий случай) */
+#preview.table-border-none table,
+#preview.table-border-none th,
+#preview.table-border-none td {
+	border: none !important;
+}
